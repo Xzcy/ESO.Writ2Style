@@ -8,6 +8,7 @@ WTS.Dault = {
   ["Patch"] = {},
   ["LastId"] = 1,
 }
+
 -- Start point
 local function OnAddOnLoaded(eventCode, addonName)
   --When loaded
@@ -15,10 +16,10 @@ local function OnAddOnLoaded(eventCode, addonName)
 	EVENT_MANAGER:UnregisterForEvent(WTS.name, EVENT_ADD_ON_LOADED)
   
   WTS.SV = ZO_SavedVars:NewAccountWide("W2S_Vars", 1, nil, WTS.Dault)
-  WTS.DataMix()
   --Build MenuItem
   WTS.MenuItem()
 end
+
 --Tool function--
 --Is it a writ with style info?
 local function IsWrit(Name)
@@ -29,6 +30,7 @@ local function IsWrit(Name)
   end
   return WTS.WritNameTable[Name] or false
 end
+
 --Handle with ItemLink string
 local function ItemLinkParser(Link, Num)
   --Link check
@@ -41,6 +43,7 @@ local function ItemLinkParser(Link, Num)
   if not Num then return Table end
   return Table[Num]
 end
+
 --The menu in inventory
 function WTS.MenuItem()
   if not LibCustomMenu then return end
@@ -163,7 +166,9 @@ function Writ2StyleByLink(Link, Both)
   end
   return chapter or book
 end
+
 --/script WritToStyle.CreatDataBase(1)
+--Only Work for English
 --The function for creating database
 function WTS.CreatDataBase(StartPoint)
   local Pattern = {}
@@ -229,12 +234,14 @@ end
 function WTS.FindByName(String)
   local F1 = string.format
   local F2 = GetItemLinkName
+  local result = {}
   for i = 1, 400000 do
     local Link = F1("|H0:item:%d:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h", i)
     if string.find(F2(Link), String) then
-      d(Link)
+      table.insert(result, Link)
     end
   end
+  return result
 end
 
 --To chat window

@@ -1,7 +1,7 @@
 ## Title: Writ2Style
-## APIVersion: 101042
-## Version: 1.42
-## AddOnVersion: 20240802
+## APIVersion: 101047
+## Version: 1.5
+## AddOnVersion: 20250822
 ## Author: @MelanAster
 ## Description: To Extract Crafting Motif Info from Master Writs.
 ## DependsOn: LibCustomMenu

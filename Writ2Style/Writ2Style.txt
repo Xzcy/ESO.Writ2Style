@@ -1,10 +1,11 @@
 ## Title: Writ2Style
-## APIVersion: 101047
-## Version: 1.5
-## AddOnVersion: 20250822
+## APIVersion: 101049
+## Version: 2.0
+## AddOnVersion: 20260131
 ## Author: @MelanAster
 ## Description: To Extract Crafting Motif Info from Master Writs.
 ## DependsOn: LibCustomMenu
+## OptionalDependsOn: AwesomeGuildStore
 ## SavedVariables: W2S_Vars
 
 # This Add-on is not created by, affiliated with or sponsored by ZeniMax Media Inc. or its affiliates. 
@@ -14,9 +15,10 @@
 
 Main.lua
 Data.lua
+AGS.lua
 
 # Writ2StyleByLink( ItemLink MasterWrit)
-# Return: ItemLink (Motif Chapter first)
+# Return: ItemLink (Motif Chapter or Book)
 
 # Writ2StyleByLink( ItemLink MasterWrit, Boolean true)
 # Return: ItemLink(Motif Chapter), ItemLink(Motif Book)

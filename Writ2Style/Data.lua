@@ -1,39 +1,176 @@
 local WTS = WritToStyle
 
---/script WritToStyle.DataCheck()
---Check DataBase
-function WTS.DataCheck()
-  local data = WTS.Data
-  for styleId, info in pairs(data) do
-    local count = 0
-    local existings = {}
-    for i = 1, 15 do
-      if info[i] then
-        count = count + 1
-        existings[info[i]] = true
-      end
+----------------------
+-- Create Data Part --
+----------------------
+
+local patternStyleMotifs = {
+  "|H1:item:176065:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",  --Crafting Motif 105: Crimson Oath Helmets
+  "|H1:item:176069:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",  --Crafting Motif 105: Crimson Oath Shoulders
+  "|H1:item:176062:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",  --Crafting Motif 105: Crimson Oath Chests
+  "|H1:item:176064:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",  --Crafting Motif 105: Crimson Oath Gloves
+  "|H1:item:176059:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",  --Crafting Motif 105: Crimson Oath Belts
+  "|H1:item:176066:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",  --Crafting Motif 105: Crimson Oath Legs
+  "|H1:item:176060:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",  --Crafting Motif 105: Crimson Oath Boots
+  "|H1:item:176058:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",  --Crafting Motif 105: Crimson Oath Axes
+  "|H1:item:176067:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",  --Crafting Motif 105: Crimson Oath Maces
+  "|H1:item:176063:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",  --Crafting Motif 105: Crimson Oath Daggers
+  "|H1:item:176071:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",  --Crafting Motif 105: Crimson Oath Swords
+  "|H1:item:176068:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",  --Crafting Motif 105: Crimson Oath Shields
+  "|H1:item:176061:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",  --Crafting Motif 105: Crimson Oath Bows
+  "|H1:item:176070:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",  --Crafting Motif 105: Crimson Oath Staves
+  "|H0:item:176072:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",  --Crafting Motif 105: Crimson Oath Style
+}
+
+--/script WritToStyle.CreatDataBase(1)
+--Only Work for English
+--The function for creating database
+function WTS.CreatDataBase(inputId)
+  local sv = WTS.SV
+  sv["Version"] = GetESOVersionString()
+  
+  --Create patterns
+  local patterns = {}
+  for i = 1, 15 do
+    local itemName = GetItemLinkName(patternStyleMotifs[i])
+    patterns[i] = itemName:gsub(".*105", ""):gsub(GetItemStyleName(123), "【1】")
+  end
+  
+  --Style info
+  local styleNames = {}
+  for i = 1, 1000 do
+    local styleName = GetItemStyleName(i)
+    local styleMaterialItemLink = GetItemStyleMaterialLink(i)
+    if styleName ~= "" and styleMaterialItemLink ~= "" then
+      styleNames[styleName] = i
+      sv[i] = {
+        ["Info"] = styleName,
+      }
     end
-    if count ~= 15 and count ~= 1 and styleId ~= 36 then
-      d("--Missing: "..styleId)
-      local findings = WTS.FindByName(": "..info["Info"])
-      for k, v in pairs(findings) do
-        if not existings[v] then
-          d(v)
+  end
+  
+  --Find motif for style
+  local lastId = sv["LastId"] or 0
+  local startId = math.max(lastId - 10000, 1)
+  
+  local itemLinkPattern = "|H0:item:%d:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h"
+  for itemId = inputId or startId, 400000 do
+    local itemLink = string.format(itemLinkPattern, itemId)
+    local itemType, itemSubType = GetItemLinkItemType(itemLink)
+    --Chapter or book type
+    if itemType == 8 and (itemSubType == 60 or itemSubType == 61) then
+      local itemName = GetItemLinkName(itemLink)
+      --Abandon Crown style item
+      if not string.find(itemName, "Crown Crafting") then
+        itemName = itemName:gsub(".*%d+", "")
+        --Which kind of motif
+        local motifIndex = 0
+        for i = 1, 15 do
+          local motifTypePattern = string.gsub(patterns[i], "【1】", ".+")
+          if string.find(itemName, motifTypePattern) then
+            motifIndex = i
+            break
+          end
+        end
+        if motifIndex > 0 then
+          --Which style
+          for styleName, styleId in pairs(styleNames) do
+            local targetItemName = string.gsub(patterns[motifIndex], "【1】", styleName)
+            if itemName == targetItemName then
+              sv[styleId][motifIndex] = itemLink
+              sv["LastId"] = itemId
+            end
+          end
+        else
+        --Motifs with wrong format
+          d(itemLink)
+          sv["Patch"][itemLink] = GetItemLinkName(itemLink)
         end
       end
-      d("--")
+    end
+  end
+
+end
+
+--/script d(WritToStyle.FindByName(""))
+--Search for everything
+function WTS.FindByName(keyString)
+  local StringFormat = string.format
+  local StringFind = string.find
+  local ItemLink2Name = GetItemLinkName
+  local result = {}
+  
+  for i = 1, 400000 do
+    local itemLink = StringFormat("|H0:item:%d:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h", i)
+    local itemName = ItemLink2Name(itemLink)
+    if StringFind(itemName, keyString) then
+      table.insert(result, itemLink)
+    end
+  end
+  return result
+end
+
+----------------
+-- Check Part --
+----------------
+
+--/script WritToStyle.DataCheck()
+
+function WTS.DataCheck()
+  local data = WTS.Data
+  for styleId, chapters in pairs(data) do
+    if styleId ~= 36 then
+      local missing = false
+      local itemCount = 0
+      local existingItems = {}
+      --Chapters Part
+      for i = 1, 14 do
+        if chapters[i] then
+          count = count + 1
+          existingItems[chapters[i]] = true
+        end
+      end
+      if itemCount ~= 0 and itemCount ~= 14 then
+        missing = true
+      end
+      --Book Part
+      if chapters[15] then
+        existingItems[chapters[15]] = true
+      else
+        missing = true
+      end
+      
+      --Missed?
+      if missing then
+        local styleName = chapters["Info"]
+        d("Missing: "..styleId..styleName)
+        local findResult = WTS.FindByName(": "..styleName)
+        for k, itemLink in (findResult) do
+          if not existingItems[itemLink] then
+            d(itemLink)
+          end
+        end
+        d("--")
+      end
     end
   end
   d("[W2S] Done!")
 end
 
---["Version"] = GetESOVersionString()
---["LastId"] = Num, the end of search last time
---[StyleId] = {
---        ["Info"] = String StyleName,
---        1-Helmets, 2-Shoulders, 3-Chests, 4-Gloves, 5-Belts, 6-Legs, 7-Boots,
---        8-Axes, 9-Maces, 10-Daggers, 11-Swords, 12-Shields, 13-Bows, 14-Staves, 15-Style book,
---       }
+---------------
+-- Data Part --
+---------------
+
+--[[
+["Version"] = GetESOVersionString()
+["LastId"] = Num, the end of search last time
+[styleId] = {
+  ["Info"] = String StyleName,
+  1-Helmets, 2-Shoulders, 3-Chests, 4-Gloves, 5-Belts, 6-Legs, 7-Boots,
+  8-Axes, 9-Maces, 10-Daggers, 11-Swords, 12-Shields, 13-Bows, 14-Staves, 15-Style book,
+}
+--]]
+
 WTS.Data =
 {
     [1] = 
@@ -2314,5 +2451,43 @@ WTS.Data =
         [14] = "|H0:item:212131:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
         [15] = "|H0:item:212118:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
         ["Info"] = "Tide-Born",
+    },
+    [158] = 
+    {
+        [1] = "|H0:item:212432:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [2] = "|H0:item:212436:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [3] = "|H0:item:212429:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [4] = "|H0:item:212431:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [5] = "|H0:item:212426:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [6] = "|H0:item:212433:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [7] = "|H0:item:212427:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [8] = "|H0:item:212425:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [9] = "|H0:item:212434:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [10] = "|H0:item:212430:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [11] = "|H0:item:212438:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [12] = "|H0:item:212435:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [13] = "|H0:item:212428:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [14] = "|H0:item:212437:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [15] = "|H0:item:212424:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        ["Info"] = "Black Soul Gem",
+    },
+    [159] = 
+    {
+        [1] = "|H0:item:212449:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [2] = "|H0:item:212453:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [3] = "|H0:item:212446:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [4] = "|H0:item:212448:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [5] = "|H0:item:212443:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [6] = "|H0:item:212450:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [7] = "|H0:item:212444:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [8] = "|H0:item:212442:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [9] = "|H0:item:212451:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [10] = "|H0:item:212447:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [11] = "|H0:item:212455:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [12] = "|H0:item:212452:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [13] = "|H0:item:212445:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [14] = "|H0:item:212454:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        [15] = "|H0:item:212441:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+        ["Info"] = "Voskrona Guardian",
     },
 }

@@ -2,7 +2,7 @@ local AGS = AwesomeGuildStore
 if not AGS then return end
 
 local FILTER_ID = AGS.data.FILTER_ID
-if not FILTER_ID.WRIT_TO_STYLE_REQUIRED_FILTER then return end
+local filterId = FILTER_ID.WRIT_TO_STYLE_REQUIRED_FILTER or 109 --Temporary
 
 local MultiChoiceFilterBase = AGS.class.MultiChoiceFilterBase
 local SUB_CATEGORY_ID = AGS.data.SUB_CATEGORY_ID
@@ -17,7 +17,7 @@ function WritRequiredMotifFilter:New(...)
 end
 
 function WritRequiredMotifFilter:Initialize()
-  MultiChoiceFilterBase.Initialize(self, FILTER_ID.WRIT_TO_STYLE_REQUIRED_FILTER, AGS.class.FilterBase.GROUP_LOCAL, "Writ2Style", 
+  MultiChoiceFilterBase.Initialize(self, filterId, AGS.class.FilterBase.GROUP_LOCAL, "Writ2Style", 
     {
       {
         id = true,
@@ -64,6 +64,6 @@ end
 AGS:RegisterCallback(AGS.callback.AFTER_FILTER_SETUP, 
   function()
     AGS:RegisterFilter(WritRequiredMotifFilter:New())
-    AGS:RegisterFilterFragment(AGS.class.MultiButtonFilterFragment:New(FILTER_ID.WRIT_TO_STYLE_REQUIRED_FILTER))
+    AGS:RegisterFilterFragment(AGS.class.MultiButtonFilterFragment:New(filterId))
   end
 )
